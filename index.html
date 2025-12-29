@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年会抽奖系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入SheetJS库用于Excel导入导出 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 背景图片容器 -->
+        <div class="background-container" id="backgroundContainer">
+            <div class="default-background"></div>
+            <img id="backgroundImage" src="" alt="背景图" class="background-image" style="display: none;">
+        </div>
+
+        <!-- 设置按钮（悬浮） -->
+        <button class="settings-toggle" id="settingsToggle" title="设置">⚙️</button>
+        
+        <!-- 设置面板（默认隐藏） -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-content">
+                <h3>设置</h3>
+                <div class="control-group">
+                    <label for="excelImport">导入抽奖号码（Excel）：</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                        <input type="file" id="excelImport" accept=".xlsx,.xls" style="flex: 1;">
+                        <button class="btn btn-download-template" id="downloadTemplateBtn" style="padding: 10px 20px; white-space: nowrap;">下载模板</button>
+                    </div>
+                    <small>Excel文件第一列应为号码，支持.xlsx和.xls格式。模板包含001-180号（三位数格式），可直接使用或修改。</small>
+                </div>
+                <div class="control-group">
+                    <label>当前号码总数：<span id="totalNumbersCount">0</span></label>
+                </div>
+                <div class="control-group">
+                    <label>创建临时奖项：</label>
+                    <div class="temp-award-form">
+                        <input type="text" id="tempAwardNameInput" class="form-input" placeholder="输入新奖项名称（如：特别奖、福利奖等）">
+                        <div class="form-row">
+                            <input type="number" id="tempAwardCountInput" class="form-input form-input-small" placeholder="数量" min="1" value="1">
+                            <button class="btn btn-create-award" id="createTempAwardBtn">创建</button>
+                        </div>
+                    </div>
+                    <small class="form-hint">输入奖项名称和号码数量，创建后可以从未抽中的号码中抽取</small>
+                </div>
+                <div class="control-group">
+                    <label for="backgroundInput">更换背景：</label>
+                    <input type="file" id="backgroundInput" accept="image/*">
+                </div>
+                <div class="control-group" style="display: flex; gap: 10px;">
+                    <button class="btn btn-export" id="exportBtn">导出抽奖结果</button>
+                    <button class="btn btn-reset" id="resetBtn">重置抽奖</button>
+                </div>
+                <button class="btn btn-close-settings" id="closeSettingsBtn">关闭</button>
+            </div>
+        </div>
+
+        <!-- 奖项选择按钮（左侧悬浮） -->
+        <div class="award-selector-floating">
+            <button class="award-btn-floating" data-award="lucky" title="幸运奖">
+                <span class="award-name">幸运奖</span>
+                <span class="award-count">43名</span>
+            </button>
+            <button class="award-btn-floating" data-award="third" title="三等奖">
+                <span class="award-name">三等奖</span>
+                <span class="award-count">20名</span>
+            </button>
+            <button class="award-btn-floating" data-award="second" title="二等奖">
+                <span class="award-name">二等奖</span>
+                <span class="award-count">9名</span>
+            </button>
+            <button class="award-btn-floating" data-award="first" title="一等奖">
+                <span class="award-name">一等奖</span>
+                <span class="award-count">5名</span>
+            </button>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+
+            <!-- 每个奖项全屏显示区域 -->
+            <!-- 幸运奖显示区域 -->
+            <div class="award-display-panel fullscreen" data-award="lucky" id="awardPanel-lucky">
+                <div class="award-panel-header">
+                    <h3 class="award-panel-title">幸运奖</h3>
+                </div>
+                <div class="award-panel-content">
+                    <div class="flash-effect award-flash"></div>
+                    <div class="lottery-animation award-animation">
+                        <div class="lottery-glow"></div>
+                        <div class="lottery-number award-number">?</div>
+                        <div class="lottery-sparkles">
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                        </div>
+                    </div>
+                    <div class="multi-numbers-container award-multi-numbers"></div>
+                </div>
+                <div class="award-panel-buttons">
+                    <button class="btn-start" data-award="lucky">开始抽奖</button>
+                    <button class="btn-stop" data-award="lucky" style="display: none;">结束抽奖</button>
+                </div>
+            </div>
+
+            <!-- 三等奖显示区域 -->
+            <div class="award-display-panel fullscreen" data-award="third" id="awardPanel-third" style="display: none;">
+                <div class="award-panel-header">
+                    <h3 class="award-panel-title">三等奖</h3>
+                </div>
+                <div class="award-panel-content">
+                    <div class="flash-effect award-flash"></div>
+                    <div class="lottery-animation award-animation">
+                        <div class="lottery-glow"></div>
+                        <div class="lottery-number award-number">?</div>
+                        <div class="lottery-sparkles">
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                        </div>
+                    </div>
+                    <div class="multi-numbers-container award-multi-numbers"></div>
+                </div>
+                <div class="award-panel-buttons">
+                    <button class="btn-start" data-award="third">开始抽奖</button>
+                    <button class="btn-stop" data-award="third" style="display: none;">结束抽奖</button>
+                </div>
+            </div>
+
+            <!-- 二等奖显示区域 -->
+            <div class="award-display-panel fullscreen" data-award="second" id="awardPanel-second" style="display: none;">
+                <div class="award-panel-header">
+                    <h3 class="award-panel-title">二等奖</h3>
+                </div>
+                <div class="award-panel-content">
+                    <div class="flash-effect award-flash"></div>
+                    <div class="lottery-animation award-animation">
+                        <div class="lottery-glow"></div>
+                        <div class="lottery-number award-number">?</div>
+                        <div class="lottery-sparkles">
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                        </div>
+                    </div>
+                    <div class="multi-numbers-container award-multi-numbers"></div>
+                </div>
+                <div class="award-panel-buttons">
+                    <button class="btn-start" data-award="second">开始抽奖</button>
+                    <button class="btn-stop" data-award="second" style="display: none;">结束抽奖</button>
+                </div>
+            </div>
+
+            <!-- 一等奖显示区域 -->
+            <div class="award-display-panel fullscreen" data-award="first" id="awardPanel-first" style="display: none;">
+                <div class="award-panel-header">
+                    <h3 class="award-panel-title">一等奖</h3>
+                </div>
+                <div class="award-panel-content">
+                    <div class="flash-effect award-flash"></div>
+                    <div class="lottery-animation award-animation">
+                        <div class="lottery-glow"></div>
+                        <div class="lottery-number award-number">?</div>
+                        <div class="lottery-sparkles">
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                        </div>
+                    </div>
+                    <div class="multi-numbers-container award-multi-numbers"></div>
+                </div>
+                <div class="award-panel-buttons">
+                    <button class="btn-start" data-award="first">开始抽奖</button>
+                    <button class="btn-stop" data-award="first" style="display: none;">结束抽奖</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
