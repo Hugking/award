@@ -466,7 +466,11 @@ class LotterySystem {
             </div>
             <div class="award-panel-content">
                 <div class="flash-effect award-flash"></div>
-                <div class="lottery-animation award-animation">
+                <!-- 奖品跑马灯（默认显示） -->
+                <div class="prize-marquee-container award-prize-marquee">
+                    <div class="prize-marquee-track"></div>
+                </div>
+                <div class="lottery-animation award-animation" style="display: none;">
                     <div class="lottery-glow"></div>
                     <div class="lottery-number award-number">?</div>
                     <div class="lottery-sparkles">
@@ -640,9 +644,128 @@ class LotterySystem {
             }
             const animation = panel.querySelector('.award-animation');
             if (animation) {
-                animation.style.display = 'flex';
+                animation.style.display = 'none';
                 animation.classList.remove('rolling');
             }
+            
+            // 显示奖品跑马灯（默认显示）
+            this.initPrizeMarquee(awardType);
+            
+            // 更新标题：幸运奖在跑马灯时只显示"幸运奖"，不显示奖品名称
+            const drawnForAward = this.getDrawnCountForAward(awardType);
+            this.updateTitleWithPrizeName(awardType, drawnForAward, false);
+        }
+    }
+    
+    // 初始化奖品跑马灯（图片滚动）
+    initPrizeMarquee(awardType) {
+        const panel = document.getElementById(`awardPanel-${awardType}`);
+        if (!panel) return;
+        
+        const marqueeContainer = panel.querySelector('.prize-marquee-container');
+        const marqueeTrack = panel.querySelector('.prize-marquee-track');
+        if (!marqueeContainer || !marqueeTrack) return;
+        
+        // 显示跑马灯
+        marqueeContainer.style.display = 'flex';
+        marqueeContainer.classList.remove('paused');
+        
+        // 获取奖品列表（从CONFIG中读取）
+        const isTempAward = this.tempAwards[awardType];
+        const award = isTempAward 
+            ? { name: this.tempAwards[awardType].name, total: this.tempAwards[awardType].total }
+            : CONFIG.awards[awardType];
+        
+        if (!award) return;
+        
+        // 从CONFIG中获取奖品图片列表
+        let prizeImages = [];
+        if (isTempAward) {
+            // 临时奖项：总是显示跑马灯，即使没有图片也显示文字占位符
+            prizeImages.push(
+                { src: `images/prizes/temp_${awardType}.jpg`, label: award.name, name: award.name }
+            );
+        } else {
+            // 常规奖项：从CONFIG.prizeImages中读取
+            if (CONFIG.prizeImages && CONFIG.prizeImages[awardType]) {
+                prizeImages = CONFIG.prizeImages[awardType];
+            }
+        }
+        
+        // 如果没有配置图片，则不显示跑马灯（临时奖项除外）
+        if (prizeImages.length === 0 && !isTempAward) {
+            marqueeContainer.style.display = 'none';
+            return;
+        }
+        
+        // 临时奖项如果没有图片配置，创建一个占位符
+        if (isTempAward && prizeImages.length === 0) {
+            prizeImages.push(
+                { src: '', label: award.name, name: award.name }
+            );
+        }
+        
+        // 生成跑马灯内容（重复足够多次以实现无缝循环）
+        // 为了无缝循环，需要至少重复2次，然后动画移动50%即可
+        marqueeTrack.innerHTML = '';
+        
+        // 创建单个奖品元素的函数
+        const createPrizeItem = (prize) => {
+            const item = document.createElement('div');
+            item.className = 'prize-marquee-item';
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'prize-marquee-image-container';
+            
+            // 如果图片src为空，直接显示文字占位符
+            if (!prize.src || prize.src.trim() === '') {
+                imgContainer.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 24px; color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5);">${prize.name || prize.label}</div>`;
+            } else {
+                const img = document.createElement('img');
+                img.src = prize.src;
+                img.alt = prize.label;
+                
+                // 图片加载失败处理
+                img.onerror = function() {
+                    // 图片加载失败时，显示文字占位符
+                    this.style.display = 'none';
+                    imgContainer.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 24px; color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5);">${prize.name || prize.label}</div>`;
+                };
+                
+                imgContainer.appendChild(img);
+            }
+            
+            item.appendChild(imgContainer);
+            
+            // 添加奖品名称标签
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'prize-marquee-label';
+            labelDiv.textContent = prize.name || prize.label;
+            item.appendChild(labelDiv);
+            
+            return item;
+        };
+        
+        // 根据奖品数量动态调整重复次数，确保内容足够长
+        // 单个奖品需要更多重复次数，多个奖品可以少一些
+        let repeatCount;
+        if (prizeImages.length === 1) {
+            // 单个奖品：重复15次，确保内容足够长
+            repeatCount = 15;
+        } else if (prizeImages.length === 2) {
+            // 两个奖品：重复8次
+            repeatCount = 8;
+        } else {
+            // 多个奖品：重复6次
+            repeatCount = 6;
+        }
+        
+        // 重复添加内容，实现无缝循环
+        for (let i = 0; i < repeatCount; i++) {
+            prizeImages.forEach(prize => {
+                const item = createPrizeItem(prize);
+                marqueeTrack.appendChild(item);
+            });
         }
     }
     
@@ -723,6 +846,15 @@ class LotterySystem {
         if (panel) {
             const startBtn = panel.querySelector('.btn-start');
             const stopBtn = panel.querySelector('.btn-stop');
+            const marqueeContainer = panel.querySelector('.prize-marquee-container');
+            
+            // 结束抽奖后，隐藏跑马灯
+            if (marqueeContainer) {
+                marqueeContainer.style.display = 'none';
+            }
+            
+            // 更新标题显示具体奖品名称（使用抽奖前的数量，确保与开始抽奖时一致）
+            this.updateTitleWithPrizeName(awardType, drawnForAward);
             
             // 显示开始抽奖按钮
             if (startBtn) {
@@ -843,8 +975,17 @@ class LotterySystem {
         const panel = document.getElementById(`awardPanel-${awardType}`);
         if (!panel) return;
         
+        // 更新标题显示具体奖品名称
+        this.updateTitleWithPrizeName(awardType, drawnForAward);
+        
         const animation = panel.querySelector('.award-animation');
         const multiContainer = panel.querySelector('.award-multi-numbers');
+        const marqueeContainer = panel.querySelector('.prize-marquee-container');
+        
+        // 隐藏跑马灯，显示抽奖动画
+        if (marqueeContainer) {
+            marqueeContainer.style.display = 'none';
+        }
         
         // 清空之前的结果显示
         if (multiContainer) multiContainer.innerHTML = '';
@@ -1096,6 +1237,82 @@ class LotterySystem {
         }
     }
     
+    // 更新标题显示具体奖品名称
+    updateTitleWithPrizeName(awardType, drawnForAward, showPrizeName = true) {
+        const panel = document.getElementById(`awardPanel-${awardType}`);
+        if (!panel) return;
+        
+        const titleElement = panel.querySelector('.award-panel-title');
+        if (!titleElement) return;
+        
+        const isTempAward = this.tempAwards[awardType];
+        const award = isTempAward 
+            ? { name: this.tempAwards[awardType].name, total: this.tempAwards[awardType].total }
+            : CONFIG.awards[awardType];
+        
+        if (!award) return;
+        
+        // 获取奖品图片配置
+        let prizeImages = [];
+        if (!isTempAward && CONFIG.prizeImages && CONFIG.prizeImages[awardType]) {
+            prizeImages = CONFIG.prizeImages[awardType];
+        }
+        
+        if (prizeImages.length === 0) {
+            // 如果没有配置奖品图片，显示奖项名称
+            titleElement.textContent = award.name;
+            return;
+        }
+        
+        // 幸运奖在默认页面（跑马灯）时，只显示"幸运奖"，不显示奖品名称
+        if (awardType === 'lucky' && !showPrizeName) {
+            titleElement.textContent = award.name;
+            return;
+        }
+        
+        // 根据已抽数量确定当前应该显示哪个奖品
+        let prizeIndex = 0;
+        if (awardType === 'lucky') {
+            // 幸运奖：有3个奖品，根据已抽数量和distribution决定
+            // distribution: [15, 15, 13]
+            // 第1次抽15个（0-14）：显示第1个奖品
+            // 第2次抽15个（15-29）：显示第2个奖品
+            // 第3次抽13个（30-42）：显示第3个奖品
+            const distribution = award.distribution || [];
+            let accumulated = 0;
+            for (let i = 0; i < distribution.length; i++) {
+                const prevAccumulated = accumulated;
+                accumulated += distribution[i];
+                // 如果已抽数量在这个区间内（包括等于prevAccumulated的情况）
+                if (drawnForAward >= prevAccumulated && drawnForAward < accumulated) {
+                    prizeIndex = i;
+                    break;
+                }
+            }
+            // 如果已抽数量超过所有distribution的总和，显示最后一个奖品
+            if (drawnForAward >= accumulated) {
+                prizeIndex = distribution.length - 1;
+            }
+            // 确保索引不越界
+            if (prizeIndex >= prizeImages.length) {
+                prizeIndex = prizeImages.length - 1;
+            }
+        } else if (awardType === 'first') {
+            // 一等奖：有两个奖品，根据已抽数量决定
+            // 如果已抽数量为0，显示第一个；否则显示第二个
+            prizeIndex = drawnForAward === 0 ? 0 : 1;
+            if (prizeIndex >= prizeImages.length) {
+                prizeIndex = prizeImages.length - 1;
+            }
+        } else {
+            // 其他奖项：只有一个奖品，显示第一个
+            prizeIndex = 0;
+        }
+        
+        // 更新标题
+        const prizeName = prizeImages[prizeIndex].label;
+        titleElement.textContent = `${award.name} - ${prizeName}`;
+    }
 
     showResults(awardType, winners, count) {
         const award = CONFIG.awards[awardType];

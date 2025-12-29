@@ -31,6 +31,29 @@ const CONFIG = {
         start: 1,      // 起始号码
         end: 180,      // 结束号码
         format: '000'  // 格式化格式（三位数，前面补0，生成：001, 002, ..., 180）
+    },
+    
+    // 奖品图片路径配置
+    prizeImages: {
+        // 幸运奖：3种奖品
+        lucky: [
+            { src: 'images/prizes/lucky_1.jpg', label: '东芝电饭锅' , name: '东芝电饭锅'},
+            { src: 'images/prizes/lucky_2.jpg', label: '追觅高速吹风机套装' , name: '追觅高速吹风机套装'},
+            { src: 'images/prizes/lucky_3.jpg', label: '科大讯飞降噪会议耳机' , name: '科大讯飞降噪会议耳机'},
+        ],
+        // 三等奖：大疆 action4
+        third: [
+            { src: 'images/prizes/third.jpg', label: '大疆 action4' , name: '大疆 action4'}
+        ],
+        // 二等奖：大疆 poket3
+        second: [
+            { src: 'images/prizes/second.jpg', label: '大疆 poket3' , name: '大疆 poket3'}
+        ],
+        // 一等奖：苹果手机17（256G）＋ 苹果AirPods 4
+        first: [
+            { src: 'images/prizes/first_1.jpg', label: '苹果手机17（256G）＋ 苹果AirPods 4' , name: '苹果手机17（256G）'},
+            { src: 'images/prizes/first_2.jpg', label: '苹果手机17（256G）＋ 苹果AirPods 4' , name: '苹果AirPods 4'}
+        ]
     }
 };
 
