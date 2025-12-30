@@ -1141,6 +1141,25 @@ class LotterySystem {
         return 0;
     }
 
+    // 判断奖项是否只有一个奖品
+    isSinglePrizeAward(awardType) {
+        // 检查是否是临时奖项
+        const isTempAward = this.tempAwards[awardType];
+        if (isTempAward) {
+            // 临时奖项默认只有一个奖品
+            return true;
+        }
+        
+        // 检查常规奖项的奖品配置
+        if (CONFIG.prizeImages && CONFIG.prizeImages[awardType]) {
+            const prizeImages = CONFIG.prizeImages[awardType];
+            return prizeImages.length === 1;
+        }
+        
+        // 如果没有配置奖品图片，默认认为只有一个奖品
+        return true;
+    }
+
     // 重置按钮状态到初始状态
     resetButtonState(awardType) {
         const panel = document.getElementById(`awardPanel-${awardType}`);
@@ -1245,7 +1264,14 @@ class LotterySystem {
         
         // 清空之前的结果显示
         if (multiContainer) multiContainer.innerHTML = '';
-        if (winnersWall) winnersWall.innerHTML = '';
+        
+        // 判断奖项是否只有一个奖品（只有一个奖品时，累积显示所有抽奖结果）
+        const isSinglePrizeAward = this.isSinglePrizeAward(awardType);
+        if (winnersWall && !isSinglePrizeAward) {
+            // 多个奖品时，清空之前的结果（因为每次抽奖对应不同奖品）
+            winnersWall.innerHTML = '';
+        }
+        // 单个奖品时，不清空winnersWall，保留之前的结果，追加新的结果
         
         // 使用3D球体模式 - 显示球体，但跳过飞出动画，直接显示到墙面
         if (this.useSphereMode) {
@@ -2070,21 +2096,64 @@ class LotterySystem {
                 });
             }
             
-            // 直接创建墙面卡片，跳过球体飞出动画
-            winners.forEach((winner, index) => {
-                setTimeout(() => {
-                    // 直接创建墙面卡片
-                    const wallCard = document.createElement('div');
-                    wallCard.className = 'winner-number-card';
-                    wallCard.textContent = winner;
-                    winnersWall.appendChild(wallCard);
+            // 判断是否只有一个奖品（只有一个奖品时，每次抽奖的结果显示在一行）
+            const isSinglePrize = this.isSinglePrizeAward(awardType);
+            
+            if (isSinglePrize) {
+                // 只有一个奖品时，每次抽奖的结果显示在一行，每行最多10个，超过则换行
+                // 设置winnersWall为列布局（垂直排列行容器）
+                winnersWall.style.flexDirection = 'column';
+                winnersWall.style.flexWrap = 'nowrap';
+                
+                const maxPerRow = 15; // 每行最多显示10个号码
+                let currentRowContainer = null;
+                let currentRowCount = 0;
+                
+                winners.forEach((winner, index) => {
+                    // 如果当前行已满10个或还没有行容器，创建新行
+                    if (!currentRowContainer || currentRowCount >= maxPerRow) {
+                        currentRowContainer = document.createElement('div');
+                        currentRowContainer.className = 'winners-row';
+                        currentRowContainer.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; width: 100%; margin-bottom: 10px;';
+                        winnersWall.appendChild(currentRowContainer);
+                        currentRowCount = 0;
+                    }
                     
-                    // 添加出现动画
                     setTimeout(() => {
-                        wallCard.style.animation = 'wallCardAppear 0.5s ease-out';
-                    }, 10);
-                }, index * 100); // 错开显示时间
-            });
+                        // 创建墙面卡片
+                        const wallCard = document.createElement('div');
+                        wallCard.className = 'winner-number-card';
+                        wallCard.textContent = winner;
+                        currentRowContainer.appendChild(wallCard);
+                        currentRowCount++;
+                        
+                        // 添加出现动画
+                        setTimeout(() => {
+                            wallCard.style.animation = 'wallCardAppear 0.5s ease-out';
+                        }, 10);
+                    }, index * 100); // 错开显示时间
+                });
+            } else {
+                // 多个奖品时，直接添加到墙面（自动换行）
+                // 设置winnersWall为行布局（自动换行）
+                winnersWall.style.flexDirection = 'row';
+                winnersWall.style.flexWrap = 'wrap';
+                
+                winners.forEach((winner, index) => {
+                    setTimeout(() => {
+                        // 直接创建墙面卡片
+                        const wallCard = document.createElement('div');
+                        wallCard.className = 'winner-number-card';
+                        wallCard.textContent = winner;
+                        winnersWall.appendChild(wallCard);
+                        
+                        // 添加出现动画
+                        setTimeout(() => {
+                            wallCard.style.animation = 'wallCardAppear 0.5s ease-out';
+                        }, 10);
+                    }, index * 100); // 错开显示时间
+                });
+            }
         } else {
             // 传统模式
             // 停止动画
