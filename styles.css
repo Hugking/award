@@ -12,7 +12,7 @@ body {
     position: relative;
 }
 
-/* 科技感网格背景 */
+/* 科技感网格背景 - 增强版 */
 body::before {
     content: '';
     position: fixed;
@@ -21,12 +21,14 @@ body::before {
     width: 100%;
     height: 100%;
     background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
+        linear-gradient(rgba(0, 255, 255, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.15) 1px, transparent 1px),
+        linear-gradient(rgba(138, 43, 226, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(138, 43, 226, 0.08) 1px, transparent 1px);
+    background-size: 50px 50px, 50px 50px, 100px 100px, 100px 100px;
     z-index: 0;
     pointer-events: none;
-    animation: gridMove 20s linear infinite;
+    animation: gridMove 25s linear infinite;
 }
 
 @keyframes gridMove {
@@ -64,7 +66,7 @@ body::before {
     z-index: 0;
 }
 
-/* 科技感光效背景 */
+/* 科技感光效背景 - 增强版 */
 .default-background::before {
     content: '';
     position: absolute;
@@ -72,16 +74,40 @@ body::before {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 30% 30%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 70% 70%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 191, 255, 0.1) 0%, transparent 50%);
-    animation: backgroundPulse 8s ease-in-out infinite;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 255, 255, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(138, 43, 226, 0.25) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 191, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(255, 20, 147, 0.15) 0%, transparent 50%);
+    animation: backgroundPulse 6s ease-in-out infinite;
+    z-index: 1;
+}
+
+.default-background::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 10% 50%, rgba(0, 255, 255, 0.2) 0%, transparent 50%);
+    animation: backgroundPulse 10s ease-in-out infinite reverse;
     z-index: 1;
 }
 
 @keyframes backgroundPulse {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.1); }
+    0%, 100% { 
+        opacity: 0.6; 
+        transform: scale(1) rotate(0deg); 
+    }
+    33% { 
+        opacity: 0.9; 
+        transform: scale(1.15) rotate(120deg); 
+    }
+    66% { 
+        opacity: 0.7; 
+        transform: scale(1.05) rotate(240deg); 
+    }
 }
 
 .background-image {
@@ -902,34 +928,38 @@ body::before {
 
 @keyframes glow {
     0%, 100% {
-        opacity: 0.5;
+        opacity: 0.6;
         transform: scale(1);
     }
     50% {
         opacity: 1;
-        transform: scale(1.1);
+        transform: scale(1.15);
     }
 }
 
 @keyframes pulse {
     0%, 100% {
         transform: scale(1);
-        box-shadow: 0 0 50px rgba(0, 255, 255, 0.5),
-                    0 0 100px rgba(138, 43, 226, 0.4);
+        box-shadow: 0 0 60px rgba(0, 255, 255, 0.7),
+                    0 0 120px rgba(138, 43, 226, 0.6),
+                    0 0 180px rgba(255, 20, 147, 0.4);
     }
     50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 70px rgba(0, 255, 255, 0.7),
-                    0 0 120px rgba(138, 43, 226, 0.6);
+        transform: scale(1.08);
+        box-shadow: 0 0 90px rgba(0, 255, 255, 1),
+                    0 0 150px rgba(138, 43, 226, 0.9),
+                    0 0 220px rgba(255, 20, 147, 0.7);
     }
 }
 
 .lottery-animation.rolling {
     animation: roll 0.1s infinite, shake 0.1s infinite;
-    box-shadow: 0 0 70px rgba(0, 255, 255, 0.8),
-                0 0 120px rgba(138, 43, 226, 0.7),
-                inset 0 0 50px rgba(0, 255, 255, 0.4);
-    border-color: rgba(0, 255, 255, 0.8);
+    box-shadow: 0 0 100px rgba(0, 255, 255, 1),
+                0 0 180px rgba(138, 43, 226, 0.9),
+                0 0 250px rgba(255, 20, 147, 0.7),
+                inset 0 0 80px rgba(0, 255, 255, 0.6);
+    border-color: rgba(0, 255, 255, 1);
+    filter: brightness(1.2);
 }
 
 @keyframes roll {
@@ -961,27 +991,33 @@ body::before {
     font-size: 120px;
     font-weight: bold;
     color: #00ffff;
-    text-shadow: 0 0 10px rgba(0, 255, 255, 1),
-                 0 0 20px rgba(0, 255, 255, 0.8),
-                 0 0 30px rgba(138, 43, 226, 0.6),
-                 0 0 40px rgba(0, 255, 255, 0.4),
+    text-shadow: 0 0 15px rgba(0, 255, 255, 1),
+                 0 0 30px rgba(0, 255, 255, 1),
+                 0 0 45px rgba(138, 43, 226, 0.9),
+                 0 0 60px rgba(255, 20, 147, 0.7),
+                 0 0 80px rgba(0, 255, 255, 0.5),
                  3px 3px 6px rgba(0, 0, 0, 0.8);
     z-index: 2;
-    animation: numberGlow 1s ease-in-out infinite;
+    animation: numberGlow 0.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8));
 }
 
 @keyframes numberGlow {
     0%, 100% {
-        text-shadow: 0 0 10px rgba(0, 255, 255, 1),
-                     0 0 20px rgba(0, 255, 255, 0.8),
-                     0 0 30px rgba(138, 43, 226, 0.6),
-                     0 0 40px rgba(0, 255, 255, 0.4);
+        text-shadow: 0 0 15px rgba(0, 255, 255, 1),
+                     0 0 30px rgba(0, 255, 255, 1),
+                     0 0 45px rgba(138, 43, 226, 0.9),
+                     0 0 60px rgba(255, 20, 147, 0.7),
+                     0 0 80px rgba(0, 255, 255, 0.5);
+        transform: scale(1);
     }
     50% {
-        text-shadow: 0 0 20px rgba(0, 255, 255, 1),
-                     0 0 30px rgba(0, 255, 255, 1),
-                     0 0 40px rgba(138, 43, 226, 0.8),
-                     0 0 60px rgba(0, 255, 255, 0.6);
+        text-shadow: 0 0 25px rgba(0, 255, 255, 1),
+                     0 0 50px rgba(0, 255, 255, 1),
+                     0 0 75px rgba(138, 43, 226, 1),
+                     0 0 100px rgba(255, 20, 147, 0.9),
+                     0 0 120px rgba(0, 255, 255, 0.8);
+        transform: scale(1.05);
     }
 }
 
@@ -1420,20 +1456,32 @@ body::before {
     align-items: center;
     justify-content: flex-start;
     min-width: 300px;
-    width: 300px;
-    height: 300px;
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(138, 43, 226, 0.2) 100%);
-    border: 2px solid rgba(0, 255, 255, 0.4);
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4),
-                0 0 30px rgba(138, 43, 226, 0.3),
-                inset 0 0 15px rgba(0, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
+    width: 550px;
+    height: 550px;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.25) 0%, rgba(138, 43, 226, 0.25) 50%, rgba(255, 20, 147, 0.2) 100%);
+    border: 3px solid rgba(0, 255, 255, 0.6);
+    border-radius: 16px;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.6),
+                0 0 50px rgba(138, 43, 226, 0.5),
+                0 0 75px rgba(255, 20, 147, 0.3),
+                inset 0 0 25px rgba(0, 255, 255, 0.2),
+                inset 0 0 50px rgba(138, 43, 226, 0.1);
+    backdrop-filter: blur(8px);
     padding: 8px;
-    transition: transform 0.3s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible;
     position: relative;
     box-sizing: border-box;
+    animation: itemFloat 4s ease-in-out infinite;
+}
+
+@keyframes itemFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .prize-marquee-image-container {
@@ -1459,20 +1507,38 @@ body::before {
     width: 100%;
     padding: 40px 5px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: #00ffff;
-    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8),
-                 0 0 15px rgba(0, 255, 255, 0.5);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 1),
+                 0 0 20px rgba(0, 255, 255, 0.8),
+                 0 0 30px rgba(138, 43, 226, 0.6),
+                 0 0 40px rgba(255, 20, 147, 0.4);
     white-space: normal;
     word-wrap: break-word;
-    line-height: 1.2;
+    line-height: 1.3;
     flex: 0 0 auto;
     min-height: 24px;
     max-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: labelGlow 3s ease-in-out infinite;
+}
+
+@keyframes labelGlow {
+    0%, 100% {
+        text-shadow: 0 0 10px rgba(0, 255, 255, 1),
+                     0 0 20px rgba(0, 255, 255, 0.8),
+                     0 0 30px rgba(138, 43, 226, 0.6),
+                     0 0 40px rgba(255, 20, 147, 0.4);
+    }
+    50% {
+        text-shadow: 0 0 15px rgba(0, 255, 255, 1),
+                     0 0 30px rgba(0, 255, 255, 1),
+                     0 0 45px rgba(138, 43, 226, 0.9),
+                     0 0 60px rgba(255, 20, 147, 0.7);
+    }
 }
 
 .prize-marquee-item > div {
@@ -1489,9 +1555,126 @@ body::before {
 }
 
 .prize-marquee-item:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6),
-                0 0 60px rgba(138, 43, 226, 0.5);
+    transform: scale(1.15) translateY(-15px);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.9),
+                0 0 100px rgba(138, 43, 226, 0.7),
+                0 0 150px rgba(255, 20, 147, 0.5),
+                inset 0 0 40px rgba(0, 255, 255, 0.4);
+    border-color: rgba(0, 255, 255, 1);
+    filter: brightness(1.2);
+}
+
+/* 心跳放大动画 - 增强版，更酷炫 */
+@keyframes heartbeat {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6),
+                    0 0 40px rgba(138, 43, 226, 0.4),
+                    0 0 60px rgba(255, 20, 147, 0.3),
+                    inset 0 0 20px rgba(0, 255, 255, 0.2);
+        filter: brightness(1);
+    }
+    10% {
+        transform: scale(1.2) rotate(1deg);
+        box-shadow: 0 0 40px rgba(0, 255, 255, 1),
+                    0 0 80px rgba(138, 43, 226, 0.8),
+                    0 0 120px rgba(255, 20, 147, 0.6),
+                    inset 0 0 30px rgba(0, 255, 255, 0.4);
+        filter: brightness(1.3);
+    }
+    20% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6),
+                    0 0 40px rgba(138, 43, 226, 0.4),
+                    0 0 60px rgba(255, 20, 147, 0.3),
+                    inset 0 0 20px rgba(0, 255, 255, 0.2);
+        filter: brightness(1);
+    }
+    30% {
+        transform: scale(1.2) rotate(-1deg);
+        box-shadow: 0 0 50px rgba(0, 255, 255, 1),
+                    0 0 100px rgba(138, 43, 226, 0.9),
+                    0 0 150px rgba(255, 20, 147, 0.7),
+                    inset 0 0 35px rgba(0, 255, 255, 0.5);
+        filter: brightness(1.4);
+    }
+    40% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.6),
+                    0 0 40px rgba(138, 43, 226, 0.4),
+                    0 0 60px rgba(255, 20, 147, 0.3),
+                    inset 0 0 20px rgba(0, 255, 255, 0.2);
+        filter: brightness(1);
+    }
+}
+
+.prize-marquee-item.heartbeat {
+    animation: heartbeat 1.5s ease-in-out infinite;
+    border-color: rgba(0, 255, 255, 0.8);
+    position: relative;
+}
+
+/* 为心跳效果添加光晕伪元素 */
+.prize-marquee-item.heartbeat::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 16px;
+    background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
+    animation: pulseGlow 1.5s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+/* 根据奖项类型添加不同的光效颜色 */
+.prize-marquee-item[data-award-type="first"].heartbeat {
+    border-color: rgba(255, 215, 0, 0.9);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6),
+                0 0 40px rgba(255, 140, 0, 0.5),
+                0 0 60px rgba(255, 20, 147, 0.4),
+                inset 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.prize-marquee-item[data-award-type="first"].heartbeat::before {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+}
+
+.prize-marquee-item[data-award-type="second"].heartbeat {
+    border-color: rgba(192, 192, 192, 0.9);
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.6),
+                0 0 40px rgba(138, 43, 226, 0.5),
+                0 0 60px rgba(0, 255, 255, 0.4),
+                inset 0 0 20px rgba(192, 192, 192, 0.3);
+}
+
+.prize-marquee-item[data-award-type="second"].heartbeat::before {
+    background: radial-gradient(circle, rgba(192, 192, 192, 0.4) 0%, transparent 70%);
+}
+
+.prize-marquee-item[data-award-type="third"].heartbeat {
+    border-color: rgba(205, 127, 50, 0.9);
+    box-shadow: 0 0 20px rgba(205, 127, 50, 0.6),
+                0 0 40px rgba(138, 43, 226, 0.5),
+                0 0 60px rgba(0, 255, 255, 0.4),
+                inset 0 0 20px rgba(205, 127, 50, 0.3);
+}
+
+.prize-marquee-item[data-award-type="third"].heartbeat::before {
+    background: radial-gradient(circle, rgba(205, 127, 50, 0.4) 0%, transparent 70%);
 }
 
 @keyframes marquee {
@@ -1507,4 +1690,262 @@ body::before {
 .prize-marquee-container.paused .prize-marquee-track {
     animation-play-state: paused;
 }
+
+/* 3D球体抽奖容器 */
+.sphere-lottery-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    perspective: 2000px;
+    perspective-origin: center center;
+}
+
+.sphere-3d-wrapper {
+    position: relative;
+    width: 450px;
+    height: 450px;
+    transform-style: preserve-3d;
+    /* 不旋转wrapper，只旋转内部的sphere-3d */
+}
+
+.sphere-3d {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    /* 球体容器固定，不旋转，保持固定角度 */
+    transform: translateZ(0) rotateX(-20deg) rotateY(0deg);
+}
+
+/* 数字容器 - 固定不动，数字各自沿球面运动 */
+.sphere-numbers-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    /* 容器不旋转，数字各自运动 */
+}
+
+.sphere-number {
+    position: absolute;
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.9),
+                 0 0 16px rgba(255, 255, 255, 0.6),
+                 0 0 24px rgba(0, 255, 255, 0.4);
+    box-shadow: none;
+    backdrop-filter: none;
+    cursor: pointer;
+    /* 移除transition以提高性能，动画由JavaScript直接控制 */
+    transform-style: preserve-3d;
+    padding: 0;
+    margin: 0;
+    white-space: nowrap;
+    /* 设置原点在元素中心 */
+    transform-origin: center center;
+    /* 初始位置在球心 */
+    left: 50%;
+    top: 50%;
+    margin-left: 0;
+    margin-top: 0;
+    /* 数字位置和透明度由JavaScript控制 */
+    will-change: transform, opacity;
+    /* 优化：使用GPU加速 */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.sphere-number:hover {
+    transform: scale(1.3) translateZ(20px);
+    text-shadow: 0 0 15px rgba(0, 255, 255, 1),
+                 0 0 30px rgba(0, 255, 255, 0.8),
+                 0 0 40px rgba(138, 43, 226, 0.6);
+}
+
+.sphere-number.selected {
+    /* 选中时不改变颜色，只保持高亮度，避免卡顿 */
+    opacity: 1 !important;
+    background: transparent !important;
+    /* 移除颜色变化和动画，只保持可见 */
+}
+
+.sphere-number.flying {
+    animation: flyToWall 1.5s ease-out forwards;
+    z-index: 1000;
+}
+
+/* 数字沿球面轨道旋转的动画 - 每个数字在自己的圆形轨道上运动 */
+@keyframes orbitRotate {
+    0% {
+        transform: translate3d(
+            calc(cos(var(--initial-angle, 0deg)) * var(--orbit-radius, 250px)),
+            var(--y-pos, 0px),
+            calc(sin(var(--initial-angle, 0deg)) * var(--orbit-radius, 250px))
+        ) rotateY(0deg);
+    }
+    100% {
+        transform: translate3d(
+            calc(cos(calc(var(--initial-angle, 0deg) + 360deg)) * var(--orbit-radius, 250px)),
+            var(--y-pos, 0px),
+            calc(sin(calc(var(--initial-angle, 0deg) + 360deg)) * var(--orbit-radius, 250px))
+        ) rotateY(360deg);
+    }
+}
+
+/* 由于CSS calc不支持三角函数，我们需要用JavaScript动态更新位置 */
+/* 这里先使用简化的旋转方式 */
+
+@keyframes numberPulse {
+    0%, 100% {
+        transform: scale(1.5) translateZ(30px);
+        text-shadow: 0 0 15px rgba(255, 215, 0, 1),
+                     0 0 30px rgba(255, 215, 0, 0.8),
+                     0 0 45px rgba(255, 165, 0, 0.6);
+    }
+    50% {
+        transform: scale(1.7) translateZ(40px);
+        text-shadow: 0 0 20px rgba(255, 215, 0, 1),
+                     0 0 40px rgba(255, 215, 0, 1),
+                     0 0 60px rgba(255, 165, 0, 0.8);
+    }
+}
+
+@keyframes flyToWall {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* 中奖数字墙面 */
+.winners-wall {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    max-width: 90%;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(10, 14, 39, 0.8) 0%, rgba(26, 31, 58, 0.8) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2),
+                inset 0 0 30px rgba(138, 43, 226, 0.1);
+    backdrop-filter: blur(15px);
+    z-index: 10;
+}
+
+/* 当墙面为空时，隐藏背景和边框 */
+.winners-wall:empty {
+    display: none;
+}
+
+.winner-number-card {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: #00ffff;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.3) 0%, rgba(138, 43, 226, 0.3) 100%);
+    border: 2px solid rgba(0, 255, 255, 0.5);
+    border-radius: 12px;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8),
+                 0 0 20px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4),
+                0 0 40px rgba(138, 43, 226, 0.3),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    animation: wallCardAppear 0.5s ease-out;
+    transition: all 0.3s;
+}
+
+.winner-number-card:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6),
+                0 0 60px rgba(138, 43, 226, 0.5);
+}
+
+@keyframes wallCardAppear {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(180deg);
+    }
+    50% {
+        transform: scale(1.2) rotate(0deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* 球体旋转加速动画（抽奖时） */
+.sphere-3d.lottery-spinning {
+    animation: sphereRotateFast 2s linear infinite;
+}
+
+@keyframes sphereRotateFast {
+    0% {
+        transform: translateZ(0) rotateX(-20deg) rotateY(0deg);
+    }
+    100% {
+        transform: translateZ(0) rotateX(-20deg) rotateY(720deg);
+    }
+}
+
+/* 墙面滚动条样式 */
+.winners-wall::-webkit-scrollbar {
+    width: 8px;
+}
+
+.winners-wall::-webkit-scrollbar-track {
+    background: rgba(10, 14, 39, 0.5);
+    border-radius: 10px;
+}
+
+.winners-wall::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.winners-wall::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.8);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
 

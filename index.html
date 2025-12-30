@@ -80,9 +80,23 @@
         <!-- 主内容区域 -->
         <div class="main-content">
 
+            <!-- 首页显示区域 -->
+            <div class="award-display-panel fullscreen" data-award="home" id="awardPanel-home">
+                <div class="award-panel-header">
+                    <h3 class="award-panel-title">风聚势能·智启新程</h3>
+                </div>
+                <div class="award-panel-content">
+                    <div class="flash-effect award-flash"></div>
+                    <!-- 所有奖品跑马灯 -->
+                    <div class="prize-marquee-container award-prize-marquee">
+                        <div class="prize-marquee-track"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 每个奖项全屏显示区域 -->
             <!-- 幸运奖显示区域 -->
-            <div class="award-display-panel fullscreen" data-award="lucky" id="awardPanel-lucky">
+            <div class="award-display-panel fullscreen" data-award="lucky" id="awardPanel-lucky" style="display: none;">
                 <div class="award-panel-header">
                     <h3 class="award-panel-title">幸运奖</h3>
                 </div>
@@ -103,6 +117,14 @@
                             <span class="sparkle"></span>
                             <span class="sparkle"></span>
                         </div>
+                    </div>
+                    <!-- 3D球体抽奖容器 -->
+                    <div class="sphere-lottery-container award-sphere-container" style="display: none;">
+                        <div class="sphere-3d-wrapper">
+                            <div class="sphere-3d" id="sphere3d-lucky"></div>
+                        </div>
+                        <!-- 中奖数字墙面 -->
+                        <div class="winners-wall award-winners-wall"></div>
                     </div>
                     <div class="multi-numbers-container award-multi-numbers"></div>
                 </div>
@@ -135,6 +157,14 @@
                             <span class="sparkle"></span>
                         </div>
                     </div>
+                    <!-- 3D球体抽奖容器 -->
+                    <div class="sphere-lottery-container award-sphere-container" style="display: none;">
+                        <div class="sphere-3d-wrapper">
+                            <div class="sphere-3d" id="sphere3d-third"></div>
+                        </div>
+                        <!-- 中奖数字墙面 -->
+                        <div class="winners-wall award-winners-wall"></div>
+                    </div>
                     <div class="multi-numbers-container award-multi-numbers"></div>
                 </div>
                 <div class="award-panel-buttons">
@@ -166,6 +196,14 @@
                             <span class="sparkle"></span>
                         </div>
                     </div>
+                    <!-- 3D球体抽奖容器 -->
+                    <div class="sphere-lottery-container award-sphere-container" style="display: none;">
+                        <div class="sphere-3d-wrapper">
+                            <div class="sphere-3d" id="sphere3d-second"></div>
+                        </div>
+                        <!-- 中奖数字墙面 -->
+                        <div class="winners-wall award-winners-wall"></div>
+                    </div>
                     <div class="multi-numbers-container award-multi-numbers"></div>
                 </div>
                 <div class="award-panel-buttons">
@@ -196,6 +234,14 @@
                             <span class="sparkle"></span>
                             <span class="sparkle"></span>
                         </div>
+                    </div>
+                    <!-- 3D球体抽奖容器 -->
+                    <div class="sphere-lottery-container award-sphere-container" style="display: none;">
+                        <div class="sphere-3d-wrapper">
+                            <div class="sphere-3d" id="sphere3d-first"></div>
+                        </div>
+                        <!-- 中奖数字墙面 -->
+                        <div class="winners-wall award-winners-wall"></div>
                     </div>
                     <div class="multi-numbers-container award-multi-numbers"></div>
                 </div>

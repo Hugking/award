@@ -10,6 +10,11 @@ class LotterySystem {
         this.tempAwardThemeColor = '#ff6b9d'; // 临时奖项统一主题色（粉红色）
         this.entropyPool = []; // 熵池：收集系统熵用于增强随机性
         this.lcgSeed = Date.now(); // LCG随机数生成器种子
+        this.useSphereMode = true; // 是否使用3D球体模式
+        this.sphereElements = {}; // 存储每个奖项的球体数字元素
+        this.sphereRotationFrameId = {}; // 存储每个奖项的旋转动画ID
+        this.sphereRotationData = {}; // 存储每个奖项的旋转数据
+        this.sphereRadius = CONFIG.sphere ? CONFIG.sphere.defaultRadius : 250; // 当前球体半径，从config读取默认值
         
         // 初始化每个奖项的已抽中列表
         Object.keys(CONFIG.awards).forEach(awardType => {
@@ -151,8 +156,11 @@ class LotterySystem {
         // 初始化显示
         this.updateDisplay();
         
-        // 默认显示第一个奖项（幸运奖）
-        this.selectAward('lucky');
+        // 默认显示首页
+        this.selectAward('home');
+        
+        // 初始化鼠标滚轮调整球体大小
+        this.initSphereWheelControl();
         
         // 初始化开始抽奖按钮
         document.querySelectorAll('.btn-start').forEach(btn => {
@@ -482,6 +490,14 @@ class LotterySystem {
                         <span class="sparkle"></span>
                     </div>
                 </div>
+                <!-- 3D球体抽奖容器 -->
+                <div class="sphere-lottery-container award-sphere-container" style="display: none;">
+                    <div class="sphere-3d-wrapper">
+                        <div class="sphere-3d" id="sphere3d-${awardId}"></div>
+                    </div>
+                    <!-- 中奖数字墙面 -->
+                    <div class="winners-wall award-winners-wall"></div>
+                </div>
                 <div class="multi-numbers-container award-multi-numbers"></div>
             </div>
             <div class="award-panel-buttons">
@@ -596,6 +612,24 @@ class LotterySystem {
     }
 
     selectAward(awardType) {
+        // 隐藏所有面板
+        document.querySelectorAll('.award-display-panel').forEach(panel => {
+            panel.style.display = 'none';
+            panel.classList.remove('active');
+        });
+
+        // 如果是首页，特殊处理
+        if (awardType === 'home') {
+            const panel = document.getElementById('awardPanel-home');
+            if (panel) {
+                panel.style.display = 'flex';
+                panel.classList.add('active');
+                // 初始化首页跑马灯，显示所有奖品
+                this.initHomeMarquee();
+            }
+            return;
+        }
+
         // 检查是临时奖项还是常规奖项
         const isTempAward = this.tempAwards[awardType];
         const award = isTempAward ? { name: isTempAward.name, total: isTempAward.total } : CONFIG.awards[awardType];
@@ -605,12 +639,6 @@ class LotterySystem {
         // 检查是否已经抽完
         const drawnForAward = this.getDrawnCountForAward(awardType);
         const isCompleted = drawnForAward >= award.total;
-
-        // 隐藏所有面板
-        document.querySelectorAll('.award-display-panel').forEach(panel => {
-            panel.style.display = 'none';
-            panel.classList.remove('active');
-        });
 
         // 显示当前奖项面板
         const panel = document.getElementById(`awardPanel-${awardType}`);
@@ -648,61 +676,244 @@ class LotterySystem {
                 animation.classList.remove('rolling');
             }
             
-            // 显示奖品跑马灯（默认显示）
-            this.initPrizeMarquee(awardType);
+            // 只在未抽奖的情况下显示跑马灯
+            if (drawnForAward === 0 && !this.isRolling[awardType]) {
+                this.initPrizeMarquee(awardType);
+            } else {
+                // 如果已抽过奖或正在抽奖，隐藏跑马灯
+                const marqueeContainer = panel.querySelector('.prize-marquee-container');
+                if (marqueeContainer) {
+                    marqueeContainer.style.display = 'none';
+                }
+            }
             
             // 更新标题：幸运奖在跑马灯时只显示"幸运奖"，不显示奖品名称
-            const drawnForAward = this.getDrawnCountForAward(awardType);
             this.updateTitleWithPrizeName(awardType, drawnForAward, false);
         }
     }
     
-    // 初始化奖品跑马灯（图片滚动）
-    initPrizeMarquee(awardType) {
-        const panel = document.getElementById(`awardPanel-${awardType}`);
+    // 初始化首页跑马灯（显示所有奖品）
+    initHomeMarquee() {
+        const panel = document.getElementById('awardPanel-home');
         if (!panel) return;
         
         const marqueeContainer = panel.querySelector('.prize-marquee-container');
         const marqueeTrack = panel.querySelector('.prize-marquee-track');
         if (!marqueeContainer || !marqueeTrack) return;
         
+        // 应用config中的跑马灯配置
+        const marqueeConfig = CONFIG.marquee || {};
+        if (marqueeConfig.gap) {
+            marqueeTrack.style.gap = marqueeConfig.gap + 'px';
+        }
+        if (marqueeConfig.speed) {
+            marqueeTrack.style.animationDuration = marqueeConfig.speed + 's';
+        }
+        
         // 显示跑马灯
         marqueeContainer.style.display = 'flex';
         marqueeContainer.classList.remove('paused');
         
-        // 获取奖品列表（从CONFIG中读取）
-        const isTempAward = this.tempAwards[awardType];
-        const award = isTempAward 
-            ? { name: this.tempAwards[awardType].name, total: this.tempAwards[awardType].total }
-            : CONFIG.awards[awardType];
-        
-        if (!award) return;
-        
-        // 从CONFIG中获取奖品图片列表
-        let prizeImages = [];
-        if (isTempAward) {
-            // 临时奖项：总是显示跑马灯，即使没有图片也显示文字占位符
-            prizeImages.push(
-                { src: `images/prizes/temp_${awardType}.jpg`, label: award.name, name: award.name }
-            );
-        } else {
-            // 常规奖项：从CONFIG.prizeImages中读取
-            if (CONFIG.prizeImages && CONFIG.prizeImages[awardType]) {
-                prizeImages = CONFIG.prizeImages[awardType];
-            }
+        // 收集所有奖品，按照1、2、3等奖的顺序，并记录奖项类型
+        let allPrizeImages = [];
+        if (CONFIG.prizeImages) {
+            // 按照指定顺序：一等奖、二等奖、三等奖、幸运奖
+            const awardOrder = ['first', 'second', 'third', 'lucky'];
+            awardOrder.forEach(awardType => {
+                const prizeImages = CONFIG.prizeImages[awardType];
+                if (prizeImages && prizeImages.length > 0) {
+                    // 为每个奖品添加奖项类型标识
+                    prizeImages.forEach(prize => {
+                        allPrizeImages.push({
+                            ...prize,
+                            awardType: awardType
+                        });
+                    });
+                }
+            });
         }
         
-        // 如果没有配置图片，则不显示跑马灯（临时奖项除外）
-        if (prizeImages.length === 0 && !isTempAward) {
+        // 如果没有奖品，不显示跑马灯
+        if (allPrizeImages.length === 0) {
             marqueeContainer.style.display = 'none';
             return;
         }
         
-        // 临时奖项如果没有图片配置，创建一个占位符
-        if (isTempAward && prizeImages.length === 0) {
-            prizeImages.push(
-                { src: '', label: award.name, name: award.name }
+        // 生成跑马灯内容
+        marqueeTrack.innerHTML = '';
+        
+        // 创建单个奖品元素的函数
+        const createPrizeItem = (prize, awardType) => {
+            const item = document.createElement('div');
+            item.className = 'prize-marquee-item';
+            // 添加奖项类型标识，用于概率跳动
+            if (awardType) {
+                item.dataset.awardType = awardType;
+            }
+            
+            // 使用config中的尺寸配置
+            const marqueeConfig = CONFIG.marquee || {};
+            if (marqueeConfig.itemWidth) {
+                item.style.width = marqueeConfig.itemWidth + 'px';
+            }
+            if (marqueeConfig.itemHeight) {
+                item.style.height = marqueeConfig.itemHeight + 'px';
+            }
+            if (marqueeConfig.itemMinWidth) {
+                item.style.minWidth = marqueeConfig.itemMinWidth + 'px';
+            }
+            
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'prize-marquee-image-container';
+            
+            // 如果图片src为空，直接显示文字占位符
+            if (!prize.src || prize.src.trim() === '') {
+                imgContainer.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 24px; color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5);">${prize.name || prize.label}</div>`;
+            } else {
+                const img = document.createElement('img');
+                img.src = prize.src;
+                img.alt = prize.label;
+                
+                // 图片加载失败处理
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    imgContainer.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 24px; color: #00ffff; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.5);">${prize.name || prize.label}</div>`;
+                };
+                
+                imgContainer.appendChild(img);
+            }
+            
+            item.appendChild(imgContainer);
+            
+            // 添加奖品名称标签
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'prize-marquee-label';
+            labelDiv.textContent = prize.name || prize.label;
+            item.appendChild(labelDiv);
+            
+            return item;
+        };
+        
+        // 根据奖品数量动态调整重复次数
+        let repeatCount;
+        if (allPrizeImages.length <= 3) {
+            repeatCount = 10;
+        } else if (allPrizeImages.length <= 6) {
+            repeatCount = 8;
+        } else {
+            repeatCount = 6;
+        }
+        
+        // 重复添加内容，实现无缝循环
+        const allItems = [];
+        for (let i = 0; i < repeatCount; i++) {
+            allPrizeImages.forEach(prize => {
+                const item = createPrizeItem(prize, prize.awardType);
+                marqueeTrack.appendChild(item);
+                allItems.push(item);
+            });
+        }
+        
+        // 根据奖项概率添加心跳效果
+        this.addRandomHeartbeat(allItems);
+    }
+    
+    // 为跑马灯项目添加随机心跳效果（按照1、2、3等奖的概率）
+    addRandomHeartbeat(items) {
+        if (items.length === 0) return;
+        
+        // 定义各奖项的跳动概率（大奖概率更高）
+        const awardProbabilities = {
+            'first': 0.85,   // 一等奖：90%概率跳动（大奖，大家最想要）
+            'second': 0.75,  // 二等奖：75%概率跳动
+            'third': 0.75,   // 三等奖：55%概率跳动
+            'lucky': 0.05    // 幸运奖：30%概率跳动（最低）
+        };
+        
+        // 根据奖项类型，按概率为每个项目添加心跳效果
+        items.forEach((item, index) => {
+            const awardType = item.dataset.awardType || 'lucky'; // 默认为幸运奖
+            const probability = awardProbabilities[awardType] || 0.15;
+            
+            // 根据概率决定是否添加心跳效果
+            if (Math.random() < probability) {
+                // 随机延迟，让心跳效果更自然（大奖延迟更短，更早出现）
+                const baseDelay = awardType === 'first' ? 0.1 : 
+                                 awardType === 'second' ? 0.3 : 
+                                 awardType === 'third' ? 0.6 : 1.0;
+                const delay = baseDelay + Math.random() * 0.5; // 在基础延迟上增加随机延迟
+                
+                setTimeout(() => {
+                    item.classList.add('heartbeat');
+                }, delay * 1000);
+            }
+        });
+    }
+    
+    // 初始化奖品跑马灯（图片滚动）- 只在未抽奖时显示，显示所有奖品
+    initPrizeMarquee(awardType) {
+        const panel = document.getElementById(`awardPanel-${awardType}`);
+        if (!panel) return;
+        
+        // 检查是否已抽过奖或正在抽奖
+        const drawnForAward = this.getDrawnCountForAward(awardType);
+        if (drawnForAward > 0 || this.isRolling[awardType]) {
+            const marqueeContainer = panel.querySelector('.prize-marquee-container');
+            if (marqueeContainer) {
+                marqueeContainer.style.display = 'none';
+            }
+            return;
+        }
+        
+        const marqueeContainer = panel.querySelector('.prize-marquee-container');
+        const marqueeTrack = panel.querySelector('.prize-marquee-track');
+        if (!marqueeContainer || !marqueeTrack) return;
+        
+        // 应用config中的跑马灯配置
+        const marqueeConfig = CONFIG.marquee || {};
+        if (marqueeConfig.gap) {
+            marqueeTrack.style.gap = marqueeConfig.gap + 'px';
+        }
+        if (marqueeConfig.speed) {
+            marqueeTrack.style.animationDuration = marqueeConfig.speed + 's';
+        }
+        
+        // 显示跑马灯
+        marqueeContainer.style.display = 'flex';
+        marqueeContainer.classList.remove('paused');
+        
+        // 收集所有奖品（所有跑马灯都显示所有奖品），按照1、2、3等奖的顺序，并记录奖项类型
+        let allPrizeImages = [];
+        if (CONFIG.prizeImages) {
+            // 按照指定顺序：一等奖、二等奖、三等奖、幸运奖
+            const awardOrder = ['first', 'second', 'third', 'lucky'];
+            awardOrder.forEach(awardKey => {
+                const prizeImages = CONFIG.prizeImages[awardKey];
+                if (prizeImages && prizeImages.length > 0) {
+                    // 为每个奖品添加奖项类型标识
+                    prizeImages.forEach(prize => {
+                        allPrizeImages.push({
+                            ...prize,
+                            awardType: awardKey
+                        });
+                    });
+                }
+            });
+        }
+        
+        // 处理临时奖项
+        const isTempAward = this.tempAwards[awardType];
+        if (isTempAward) {
+            const award = this.tempAwards[awardType];
+            allPrizeImages.push(
+                { src: `images/prizes/temp_${awardType}.jpg`, label: award.name, name: award.name, awardType: 'lucky' }
             );
+        }
+        
+        // 如果没有奖品，不显示跑马灯
+        if (allPrizeImages.length === 0) {
+            marqueeContainer.style.display = 'none';
+            return;
         }
         
         // 生成跑马灯内容（重复足够多次以实现无缝循环）
@@ -710,9 +921,25 @@ class LotterySystem {
         marqueeTrack.innerHTML = '';
         
         // 创建单个奖品元素的函数
-        const createPrizeItem = (prize) => {
+        const createPrizeItem = (prize, awardType) => {
             const item = document.createElement('div');
             item.className = 'prize-marquee-item';
+            // 添加奖项类型标识，用于概率跳动
+            if (awardType) {
+                item.dataset.awardType = awardType;
+            }
+            
+            // 使用config中的尺寸配置
+            const marqueeConfig = CONFIG.marquee || {};
+            if (marqueeConfig.itemWidth) {
+                item.style.width = marqueeConfig.itemWidth + 'px';
+            }
+            if (marqueeConfig.itemHeight) {
+                item.style.height = marqueeConfig.itemHeight + 'px';
+            }
+            if (marqueeConfig.itemMinWidth) {
+                item.style.minWidth = marqueeConfig.itemMinWidth + 'px';
+            }
             
             const imgContainer = document.createElement('div');
             imgContainer.className = 'prize-marquee-image-container';
@@ -746,27 +973,28 @@ class LotterySystem {
             return item;
         };
         
-        // 根据奖品数量动态调整重复次数，确保内容足够长
-        // 单个奖品需要更多重复次数，多个奖品可以少一些
+        // 根据奖品数量动态调整重复次数
         let repeatCount;
-        if (prizeImages.length === 1) {
-            // 单个奖品：重复15次，确保内容足够长
-            repeatCount = 15;
-        } else if (prizeImages.length === 2) {
-            // 两个奖品：重复8次
-            repeatCount = 8;
-        } else {
-            // 多个奖品：重复6次
+        if (allPrizeImages.length <= 3) {
+            repeatCount = 10;
+        } else if (allPrizeImages.length <= 6) {
             repeatCount = 6;
+        } else {
+            repeatCount = 4;
         }
         
         // 重复添加内容，实现无缝循环
+        const allItems = [];
         for (let i = 0; i < repeatCount; i++) {
-            prizeImages.forEach(prize => {
-                const item = createPrizeItem(prize);
+            allPrizeImages.forEach(prize => {
+                const item = createPrizeItem(prize, prize.awardType);
                 marqueeTrack.appendChild(item);
+                allItems.push(item);
             });
         }
+        
+        // 根据奖项概率添加心跳效果
+        this.addRandomHeartbeat(allItems);
     }
     
     stopLottery(awardType) {
@@ -785,6 +1013,12 @@ class LotterySystem {
             if (animation) {
                 animation.classList.remove('rolling');
             }
+            
+            // 停止数字快速旋转
+            const sphereNumbers = panel.querySelectorAll('.sphere-number');
+            sphereNumbers.forEach(el => {
+                el.classList.remove('lottery-spinning');
+            });
             
             // 停止多个号码的滚动
             const multiContainer = panel.querySelector('.award-multi-numbers');
@@ -981,22 +1215,41 @@ class LotterySystem {
         const animation = panel.querySelector('.award-animation');
         const multiContainer = panel.querySelector('.award-multi-numbers');
         const marqueeContainer = panel.querySelector('.prize-marquee-container');
+        const sphereContainer = panel.querySelector('.award-sphere-container');
+        const winnersWall = panel.querySelector('.award-winners-wall');
         
-        // 隐藏跑马灯，显示抽奖动画
+        // 隐藏跑马灯
         if (marqueeContainer) {
             marqueeContainer.style.display = 'none';
         }
         
         // 清空之前的结果显示
         if (multiContainer) multiContainer.innerHTML = '';
+        if (winnersWall) winnersWall.innerHTML = '';
         
-        // 设置显示模式
-        if (count === 1) {
-            if (animation) animation.style.display = 'flex';
-            if (multiContainer) multiContainer.style.display = 'none';
-        } else {
+        // 使用3D球体模式 - 显示球体，但跳过飞出动画，直接显示到墙面
+        if (this.useSphereMode) {
+            // 隐藏传统动画，显示3D球体
             if (animation) animation.style.display = 'none';
-            if (multiContainer) multiContainer.style.display = 'flex';
+            if (multiContainer) multiContainer.style.display = 'none';
+            if (sphereContainer) {
+                sphereContainer.style.display = 'flex';
+                // 显示球体容器
+                const sphereWrapper = sphereContainer.querySelector('.sphere-3d-wrapper');
+                if (sphereWrapper) sphereWrapper.style.display = 'block';
+                // 创建或更新3D球体（保留球体视觉效果）
+                this.createSphere(awardType);
+            }
+        } else {
+            // 传统模式
+            if (sphereContainer) sphereContainer.style.display = 'none';
+            if (count === 1) {
+                if (animation) animation.style.display = 'flex';
+                if (multiContainer) multiContainer.style.display = 'none';
+            } else {
+                if (animation) animation.style.display = 'none';
+                if (multiContainer) multiContainer.style.display = 'flex';
+            }
         }
 
         // 标记为正在滚动
@@ -1163,67 +1416,87 @@ class LotterySystem {
         const animation = panel.querySelector('.award-animation');
         const numberDisplay = panel.querySelector('.award-number');
         const multiContainer = panel.querySelector('.award-multi-numbers');
-        
-        // 确保动画状态正确
-        if (animation) {
-            animation.classList.add('rolling');
-        }
+        const sphereContainer = panel.querySelector('.award-sphere-container');
+        const sphereWrapper = panel.querySelector('.sphere-3d-wrapper');
         
         // 获取未抽中的号码列表用于滚动显示
         const availableNumbers = this.availableNumbers.filter(num => !this.drawnNumbers.has(String(num)));
         
-        if (count === 1) {
-            // 单个号码滚动效果
-            if (numberDisplay) {
-                numberDisplay.textContent = '?';
+        // 使用3D球体模式
+        if (this.useSphereMode && sphereContainer && sphereContainer.style.display !== 'none') {
+            // 优化：球体旋转由startSphereRotation统一管理，这里不需要重复创建动画
+            // 只需要确保startSphereRotation已经启动即可（createSphere时会自动启动）
+            // 速度控制通过修改sphereRotationData中的rotationSpeed来实现
+            if (this.sphereRotationData && this.sphereRotationData[awardType]) {
+                // 如果正在抽奖，直接设置目标速度
+                if (this.isRolling[awardType]) {
+                    this.sphereRotationData[awardType].targetSpeed = 10.0;
+                } else {
+                    this.sphereRotationData[awardType].targetSpeed = 0.5;
+                }
             }
             
-            const interval = setInterval(() => {
-                if (!this.isRolling[awardType]) {
-                    clearInterval(interval);
-                    return;
-                }
-                if (availableNumbers.length > 0) {
-                    const randomIndex = this.getHighQualityRandom(availableNumbers.length);
-                    const randomNum = availableNumbers[randomIndex];
-                    if (numberDisplay) numberDisplay.textContent = randomNum;
-                }
-            }, 50); // 快速滚动，每50ms更新一次
-
-            this.animationIntervals[awardType].push(interval);
+            // 不再随机高亮数字，避免卡顿，只让球体旋转
         } else {
-            // 多个号码的滚动效果
-            if (multiContainer) {
-                multiContainer.innerHTML = '';
-                multiContainer.style.display = 'flex';
-                
-                for (let i = 0; i < count; i++) {
-                    const numberItem = document.createElement('div');
-                    numberItem.className = 'multi-number-item';
-                    numberItem.textContent = '?';
-                    multiContainer.appendChild(numberItem);
+            // 传统模式
+            // 确保动画状态正确
+            if (animation) {
+                animation.classList.add('rolling');
+            }
+            
+            if (count === 1) {
+                // 单个号码滚动效果
+                if (numberDisplay) {
+                    numberDisplay.textContent = '?';
                 }
                 
-                // 快速滚动数字，每个号码独立滚动
-                const numberItems = multiContainer.querySelectorAll('.multi-number-item');
-                
-                numberItems.forEach((item, index) => {
-                    // 错开开始时间，更有层次感
-                    setTimeout(() => {
-                        const interval = setInterval(() => {
-                            if (!this.isRolling[awardType]) {
-                                clearInterval(interval);
-                                return;
-                            }
-                            if (availableNumbers.length > 0) {
-                                const randomIndex = this.getHighQualityRandom(availableNumbers.length);
-                                const randomNum = availableNumbers[randomIndex];
-                                item.textContent = randomNum;
-                            }
-                        }, 50); // 快速滚动
-                        this.animationIntervals[awardType].push(interval);
-                    }, index * 30);
-                });
+                const interval = setInterval(() => {
+                    if (!this.isRolling[awardType]) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    if (availableNumbers.length > 0) {
+                        const randomIndex = this.getHighQualityRandom(availableNumbers.length);
+                        const randomNum = availableNumbers[randomIndex];
+                        if (numberDisplay) numberDisplay.textContent = randomNum;
+                    }
+                }, 50); // 快速滚动，每50ms更新一次
+
+                this.animationIntervals[awardType].push(interval);
+            } else {
+                // 多个号码的滚动效果
+                if (multiContainer) {
+                    multiContainer.innerHTML = '';
+                    multiContainer.style.display = 'flex';
+                    
+                    for (let i = 0; i < count; i++) {
+                        const numberItem = document.createElement('div');
+                        numberItem.className = 'multi-number-item';
+                        numberItem.textContent = '?';
+                        multiContainer.appendChild(numberItem);
+                    }
+                    
+                    // 快速滚动数字，每个号码独立滚动
+                    const numberItems = multiContainer.querySelectorAll('.multi-number-item');
+                    
+                    numberItems.forEach((item, index) => {
+                        // 错开开始时间，更有层次感
+                        setTimeout(() => {
+                            const interval = setInterval(() => {
+                                if (!this.isRolling[awardType]) {
+                                    clearInterval(interval);
+                                    return;
+                                }
+                                if (availableNumbers.length > 0) {
+                                    const randomIndex = this.getHighQualityRandom(availableNumbers.length);
+                                    const randomNum = availableNumbers[randomIndex];
+                                    item.textContent = randomNum;
+                                }
+                            }, 50); // 快速滚动
+                            this.animationIntervals[awardType].push(interval);
+                        }, index * 30);
+                    });
+                }
             }
         }
         
@@ -1235,6 +1508,264 @@ class LotterySystem {
                 flashEffect.style.animation = 'flash 0.3s ease-out';
             }, 10);
         }
+    }
+    
+    // 创建3D球体
+    createSphere(awardType) {
+        const sphereElement = document.getElementById(`sphere3d-${awardType}`);
+        if (!sphereElement) return;
+        
+        // 清空之前的球体
+        sphereElement.innerHTML = '';
+        this.sphereElements[awardType] = [];
+        
+        // 获取未抽中的号码
+        const availableNumbers = this.availableNumbers.filter(num => !this.drawnNumbers.has(String(num)));
+        
+        if (availableNumbers.length === 0) {
+            return;
+        }
+        
+        // 球体参数（使用当前球体半径）
+        const radius = this.sphereRadius;
+        const numPoints = Math.min(availableNumbers.length, 250); // 优化：减少数字数量以提高性能，但仍保持球体效果
+        
+        // 使用斐波那契螺旋算法分布数字在球面上
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // 黄金角度
+        
+        for (let i = 0; i < numPoints; i++) {
+            const num = availableNumbers[i % availableNumbers.length];
+            
+            // 计算球面坐标
+            const y = 1 - (i / (numPoints - 1)) * 2; // y从1到-1
+            const radiusAtY = Math.sqrt(1 - y * y); // 在当前y高度的圆半径
+            const theta = goldenAngle * i; // 角度
+            
+            const x = Math.cos(theta) * radiusAtY;
+            const z = Math.sin(theta) * radiusAtY;
+            
+            // 创建数字元素
+            const numberEl = document.createElement('div');
+            numberEl.className = 'sphere-number';
+            numberEl.textContent = num;
+            numberEl.dataset.number = num;
+            
+            // 创建数字容器（如果还没有）
+            let numbersContainer = sphereElement.querySelector('.sphere-numbers-container');
+            if (!numbersContainer) {
+                numbersContainer = document.createElement('div');
+                numbersContainer.className = 'sphere-numbers-container';
+                sphereElement.appendChild(numbersContainer);
+            }
+            
+            // 计算数字在3D球面上的位置
+            const xPos = x * radius;
+            const yPos = y * radius;
+            const zPos = z * radius;
+            
+            // 存储3D位置数据
+            numberEl.dataset.x = xPos;
+            numberEl.dataset.y = yPos;
+            numberEl.dataset.z = zPos;
+            numberEl.dataset.initialX = x;
+            numberEl.dataset.initialY = y;
+            numberEl.dataset.initialZ = z;
+            numberEl.dataset.initialAngle = theta;
+            
+            // 初始位置
+            numberEl.style.transform = `translate3d(${xPos}px, ${yPos}px, ${zPos}px)`;
+            
+            // 根据z轴深度设置初始透明度（后面的数字稍微暗一点，但不要太暗）
+            const depth = (zPos + radius) / (2 * radius); // 0到1之间
+            const opacity = 0.5 + depth * 0.5; // 后面的0.5，前面的1.0（提高后面数字的可见度）
+            numberEl.style.opacity = opacity;
+            
+            numbersContainer.appendChild(numberEl);
+            this.sphereElements[awardType].push(numberEl);
+        }
+        
+        // 更新容器大小
+        this.updateSphereContainerSize();
+        
+        // 启动球体持续旋转动画
+        this.startSphereRotation(awardType);
+    }
+    
+    // 初始化鼠标滚轮调整球体大小
+    initSphereWheelControl() {
+        const sphereConfig = CONFIG.sphere || { defaultRadius: 250, minRadius: 150, maxRadius: 500, wheelStep: 10 };
+        const minRadius = sphereConfig.minRadius || 150;
+        const maxRadius = sphereConfig.maxRadius || 500;
+        const wheelStep = sphereConfig.wheelStep || 10;
+        
+        // 监听鼠标滚轮事件（只在球体容器上）
+        document.addEventListener('wheel', (e) => {
+            // 检查是否在球体容器上
+            const sphereContainer = e.target.closest('.sphere-lottery-container');
+            if (!sphereContainer || sphereContainer.style.display === 'none') {
+                return;
+            }
+            
+            // 阻止默认滚动行为
+            e.preventDefault();
+            
+            // 根据滚轮方向调整球体大小
+            const delta = e.deltaY > 0 ? -wheelStep : wheelStep;
+            const newRadius = Math.max(minRadius, Math.min(maxRadius, this.sphereRadius + delta));
+            
+            if (newRadius !== this.sphereRadius) {
+                this.sphereRadius = newRadius;
+                
+                // 更新所有显示的球体
+                Object.keys(this.sphereElements).forEach(awardType => {
+                    if (this.sphereElements[awardType] && this.sphereElements[awardType].length > 0) {
+                        // 重新创建球体以应用新的大小
+                        this.createSphere(awardType);
+                    }
+                });
+                
+                // 更新CSS容器大小
+                this.updateSphereContainerSize();
+            }
+        }, { passive: false });
+    }
+    
+    // 更新球体容器大小
+    updateSphereContainerSize() {
+        // 容器大小应该是球体半径的1.8倍（留出空间）
+        const containerSize = Math.ceil(this.sphereRadius * 1.8);
+        document.querySelectorAll('.sphere-3d-wrapper').forEach(wrapper => {
+            wrapper.style.width = containerSize + 'px';
+            wrapper.style.height = containerSize + 'px';
+        });
+    }
+    
+    // 启动球体持续旋转
+    startSphereRotation(awardType) {
+        const sphereElement = document.getElementById(`sphere3d-${awardType}`);
+        if (!sphereElement) return;
+        
+        // 如果已经有旋转动画在运行，先停止（避免重复创建动画）
+        if (this.sphereRotationFrameId && this.sphereRotationFrameId[awardType]) {
+            cancelAnimationFrame(this.sphereRotationFrameId[awardType]);
+            this.sphereRotationFrameId[awardType] = null;
+        }
+        
+        if (!this.sphereRotationFrameId) {
+            this.sphereRotationFrameId = {};
+        }
+        if (!this.sphereRotationData) {
+            this.sphereRotationData = {};
+        }
+        
+        const radius = this.sphereRadius; // 使用当前球体半径
+        let rotationY = 0; // Y轴旋转角度（弧度）
+        let rotationX = 0; // X轴旋转角度（弧度）- 添加X轴旋转，避免极点不动
+        const rotationSpeed = 0.5; // 基础旋转速度（弧度/秒）
+        const rotationSpeedX = 0.3; // X轴旋转速度（稍慢一些，更自然）
+        
+        this.sphereRotationData[awardType] = {
+            rotationY: rotationY,
+            rotationX: rotationX, // 添加X轴旋转
+            rotationSpeed: rotationSpeed,
+            rotationSpeedX: rotationSpeedX, // X轴旋转速度
+            targetSpeed: rotationSpeed, // 添加目标速度
+            startTime: performance.now(),
+            lastTime: performance.now() // 添加上次更新时间
+        };
+        
+        const animate = (currentTime) => {
+            const data = this.sphereRotationData[awardType];
+            if (!data) {
+                return;
+            }
+            
+            const deltaTime = (currentTime - data.lastTime) / 1000; // 时间差（秒）
+            data.lastTime = currentTime;
+            
+            // 根据抽奖状态设置目标速度
+            if (this.isRolling[awardType]) {
+                data.targetSpeed = 10.0; // 抽奖时目标速度
+                data.targetSpeedX = 6.0; // X轴旋转速度（稍慢一些，保持自然）
+            } else {
+                data.targetSpeed = 0.5; // 不抽奖时基础速度
+                data.targetSpeedX = 0.3; // X轴基础速度
+            }
+            
+            // 平滑过渡到目标速度（加快加速和减速步长）
+            if (data.rotationSpeed < data.targetSpeed) {
+                data.rotationSpeed = Math.min(data.rotationSpeed + 0.1, data.targetSpeed); // 加速步长
+            } else if (data.rotationSpeed > data.targetSpeed) {
+                data.rotationSpeed = Math.max(data.rotationSpeed - 0.15, data.targetSpeed); // 减速步长
+            }
+            
+            // X轴旋转速度也平滑过渡
+            if (data.rotationSpeedX < data.targetSpeedX) {
+                data.rotationSpeedX = Math.min(data.rotationSpeedX + 0.06, data.targetSpeedX);
+            } else if (data.rotationSpeedX > data.targetSpeedX) {
+                data.rotationSpeedX = Math.max(data.rotationSpeedX - 0.09, data.targetSpeedX);
+            }
+            
+            // 更新旋转角度（使用累积角度，避免速度变化时出现倒转）
+            data.rotationY += data.rotationSpeed * deltaTime;
+            data.rotationX += data.rotationSpeedX * deltaTime; // X轴旋转
+            
+            // 保持角度在合理范围内（避免溢出）
+            if (data.rotationY > Math.PI * 2) {
+                data.rotationY -= Math.PI * 2;
+            }
+            if (data.rotationX > Math.PI * 2) {
+                data.rotationX -= Math.PI * 2;
+            }
+            
+            if (this.sphereElements[awardType] && this.sphereElements[awardType].length > 0) {
+                // 优化：缓存三角函数计算结果，避免重复计算
+                const cosY = Math.cos(data.rotationY);
+                const sinY = Math.sin(data.rotationY);
+                const cosX = Math.cos(data.rotationX);
+                const sinX = Math.sin(data.rotationX);
+                const radius2 = radius * 2; // 缓存2倍半径
+                
+                // 优化：使用for循环代替forEach，性能更好
+                const elements = this.sphereElements[awardType];
+                for (let i = 0; i < elements.length; i++) {
+                    const el = elements[i];
+                    // 获取初始球面坐标（归一化）
+                    const initialX = parseFloat(el.dataset.initialX);
+                    const initialY = parseFloat(el.dataset.initialY);
+                    const initialZ = parseFloat(el.dataset.initialZ);
+                    
+                    // 先应用Y轴旋转（绕Y轴旋转）
+                    let rotatedX = initialX * cosY - initialZ * sinY;
+                    let rotatedZ = initialX * sinY + initialZ * cosY;
+                    let rotatedY = initialY;
+                    
+                    // 再应用X轴旋转（绕X轴旋转），这样极点也会移动
+                    const finalY = rotatedY * cosX - rotatedZ * sinX;
+                    const finalZ = rotatedY * sinX + rotatedZ * cosX;
+                    rotatedZ = finalZ;
+                    rotatedY = finalY;
+                    
+                    // 计算3D位置
+                    const xPos = rotatedX * radius;
+                    const yPos = rotatedY * radius; // 使用旋转后的Y坐标
+                    const zPos = rotatedZ * radius;
+                    
+                    // 更新位置（包含缩放）
+                    const depth = (zPos + radius) / radius2; // 0到1之间
+                    const scale = 0.7 + depth * 0.3; // 后面的0.7倍，前面的1.0倍（减少缩放差异）
+                    el.style.transform = `translate3d(${xPos}px,${yPos}px,${zPos}px) scale(${scale})`;
+                    
+                    // 根据z轴深度更新透明度（后面的数字稍微暗一点，但不要太暗）
+                    const opacity = 0.5 + depth * 0.5; // 后面的0.5，前面的1.0（提高后面数字的可见度）
+                    el.style.opacity = opacity;
+                }
+            }
+            
+            this.sphereRotationFrameId[awardType] = requestAnimationFrame(animate);
+        };
+        
+        this.sphereRotationFrameId[awardType] = requestAnimationFrame(animate);
     }
     
     // 更新标题显示具体奖品名称
@@ -1315,34 +1846,73 @@ class LotterySystem {
     }
 
     showResults(awardType, winners, count) {
-        const award = CONFIG.awards[awardType];
+        const isTempAward = this.tempAwards[awardType];
+        const award = isTempAward 
+            ? { name: this.tempAwards[awardType].name, total: this.tempAwards[awardType].total }
+            : CONFIG.awards[awardType];
         const panel = document.getElementById(`awardPanel-${awardType}`);
         if (!panel) return;
         
         const numberDisplay = panel.querySelector('.award-number');
         const multiContainer = panel.querySelector('.award-multi-numbers');
         const animation = panel.querySelector('.award-animation');
-
-        // 停止动画
-        if (animation) {
-            animation.classList.remove('rolling');
+        const sphereContainer = panel.querySelector('.award-sphere-container');
+        const winnersWall = panel.querySelector('.award-winners-wall');
+        
+        // 停止数字快速旋转
+        if (this.sphereElements[awardType] && this.sphereElements[awardType].length > 0) {
+            this.sphereElements[awardType].forEach(el => {
+                el.classList.remove('lottery-spinning');
+            });
         }
 
-        // 更新显示
-        if (count === 1) {
-            if (numberDisplay) numberDisplay.textContent = winners[0];
-        } else {
-            // 更新多个号码显示
-            if (multiContainer) {
-                const numberItems = multiContainer.querySelectorAll('.multi-number-item');
-                winners.forEach((winner, index) => {
-                    if (numberItems[index]) {
-                        setTimeout(() => {
-                            numberItems[index].textContent = winner;
-                            numberItems[index].style.animation = 'numberPop 0.5s ease-out';
-                        }, index * 100); // 错开显示时间
-                    }
+        // 使用3D球体模式 - 直接显示到墙面，不执行飞出动画
+        if (this.useSphereMode && sphereContainer && sphereContainer.style.display !== 'none') {
+            // 清除所有高亮
+            if (this.sphereElements[awardType]) {
+                this.sphereElements[awardType].forEach(el => {
+                    el.classList.remove('selected');
                 });
+            }
+            
+            // 直接创建墙面卡片，跳过球体飞出动画
+            winners.forEach((winner, index) => {
+                setTimeout(() => {
+                    // 直接创建墙面卡片
+                    const wallCard = document.createElement('div');
+                    wallCard.className = 'winner-number-card';
+                    wallCard.textContent = winner;
+                    winnersWall.appendChild(wallCard);
+                    
+                    // 添加出现动画
+                    setTimeout(() => {
+                        wallCard.style.animation = 'wallCardAppear 0.5s ease-out';
+                    }, 10);
+                }, index * 100); // 错开显示时间
+            });
+        } else {
+            // 传统模式
+            // 停止动画
+            if (animation) {
+                animation.classList.remove('rolling');
+            }
+
+            // 更新显示
+            if (count === 1) {
+                if (numberDisplay) numberDisplay.textContent = winners[0];
+            } else {
+                // 更新多个号码显示
+                if (multiContainer) {
+                    const numberItems = multiContainer.querySelectorAll('.multi-number-item');
+                    winners.forEach((winner, index) => {
+                        if (numberItems[index]) {
+                            setTimeout(() => {
+                                numberItems[index].textContent = winner;
+                                numberItems[index].style.animation = 'numberPop 0.5s ease-out';
+                            }, index * 100); // 错开显示时间
+                        }
+                    });
+                }
             }
         }
 
@@ -1355,6 +1925,13 @@ class LotterySystem {
         this.updateAwardPanelCount(awardType);
         // 更新手动添加号码列表（因为已抽中的号码需要从列表中移除）
         this.updateManualNumbersList();
+        
+        // 更新球体（移除已抽中的数字，延迟执行避免卡顿）
+        if (this.useSphereMode && sphereContainer && sphereContainer.style.display !== 'none') {
+            setTimeout(() => {
+                this.createSphere(awardType);
+            }, 1000); // 延迟1秒更新，避免立即更新造成卡顿
+        }
     }
     
     updateAwardPanelCount(awardType) {

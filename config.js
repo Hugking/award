@@ -33,6 +33,23 @@ const CONFIG = {
         format: '000'  // 格式化格式（三位数，前面补0，生成：001, 002, ..., 180）
     },
     
+    // 球体配置
+    sphere: {
+        defaultRadius: 400,        // 默认球体半径（像素）
+        minRadius: 150,            // 最小半径
+        maxRadius: 800,            // 最大半径
+        wheelStep: 10              // 滚轮调整步长（像素）
+    },
+    
+    // 跑马灯配置
+    marquee: {
+        itemWidth: 300,            // 跑马灯项目宽度（像素）
+        itemHeight: 300,           // 跑马灯项目高度（像素）
+        itemMinWidth: 300,         // 跑马灯项目最小宽度（像素）
+        gap: 40,                   // 项目之间的间距（像素）
+        speed: 40                  // 跑马灯滚动速度（秒，数值越小越快）
+    },
+    
     // 奖品图片路径配置
     prizeImages: {
         // 幸运奖：3种奖品
@@ -47,7 +64,7 @@ const CONFIG = {
         ],
         // 二等奖：大疆 poket3
         second: [
-            { src: 'images/prizes/second.jpg', label: '大疆 poket3' , name: '大疆 poket3'}
+            { src: 'images/prizes/second.jpg', label: '大疆 Pocket3' , name: '大疆 Pocket3'}
         ],
         // 一等奖：苹果手机17（256G）＋ 苹果AirPods 4
         first: [
