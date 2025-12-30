@@ -139,7 +139,7 @@ body::before {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1100;
     width: 56px;
     height: 56px;
     border-radius: 12px;
@@ -171,7 +171,7 @@ body::before {
     position: fixed;
     bottom: 80px;
     right: 20px;
-    z-index: 999;
+    z-index: 1100;
     background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(26, 31, 58, 0.95) 100%);
     border-radius: 20px;
     padding: 30px;
@@ -312,6 +312,220 @@ body::before {
 .award-btn-floating .award-count {
     font-size: 12px;
     opacity: 0.9;
+}
+
+/* 当前奖品展示（右侧悬浮） */
+.current-prize-display {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(26, 31, 58, 0.95) 100%);
+    padding: 25px 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    border: 3px solid rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.4),
+                0 0 80px rgba(138, 43, 226, 0.3),
+                inset 0 0 40px rgba(0, 255, 255, 0.15);
+    min-width: 280px;
+    max-width: 350px;
+    animation: prizeDisplayFloat 3s ease-in-out infinite;
+}
+
+@keyframes prizeDisplayFloat {
+    0%, 100% {
+        transform: translateY(-50%) translateX(0);
+    }
+    50% {
+        transform: translateY(-50%) translateX(-5px);
+    }
+}
+
+.current-prize-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8),
+                 0 0 20px rgba(0, 255, 255, 0.5);
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.current-prize-image-container {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 15px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+    border: 2px solid rgba(0, 255, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(138, 43, 226, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.current-prize-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    animation: prizeImageGlow 2s ease-in-out infinite;
+}
+
+@keyframes prizeImageGlow {
+    0%, 100% {
+        filter: brightness(1) drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+    }
+    50% {
+        filter: brightness(1.1) drop-shadow(0 0 20px rgba(0, 255, 255, 0.8));
+    }
+}
+
+.current-prize-placeholder {
+    color: rgba(0, 255, 255, 0.6);
+    font-size: 16px;
+    text-align: center;
+    padding: 20px;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+.current-prize-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.current-prize-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.current-prize-list::-webkit-scrollbar-track {
+    background: rgba(0, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.current-prize-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.5);
+    border-radius: 3px;
+}
+
+.current-prize-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.8);
+}
+
+.current-prize-item {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.current-prize-item.drawn {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    border-color: rgba(100, 100, 100, 0.3);
+    background: linear-gradient(135deg, rgba(50, 50, 50, 0.3) 0%, rgba(30, 30, 30, 0.3) 100%);
+}
+
+.current-prize-item.current {
+    border-color: rgba(0, 255, 255, 0.9);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.6),
+                0 0 50px rgba(138, 43, 226, 0.4),
+                inset 0 0 20px rgba(0, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(138, 43, 226, 0.2) 100%);
+    animation: currentPrizePulse 2s ease-in-out infinite;
+}
+
+@keyframes currentPrizePulse {
+    0%, 100% {
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.6),
+                    0 0 50px rgba(138, 43, 226, 0.4),
+                    inset 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 35px rgba(0, 255, 255, 0.9),
+                    0 0 70px rgba(138, 43, 226, 0.6),
+                    inset 0 0 30px rgba(0, 255, 255, 0.3);
+    }
+}
+
+.current-prize-item-image {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.current-prize-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.current-prize-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #00ffff;
+    text-align: left;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8),
+                 0 0 15px rgba(0, 255, 255, 0.5);
+    line-height: 1.4;
+    word-wrap: break-word;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.current-prize-item.drawn .current-prize-item-name {
+    color: rgba(150, 150, 150, 0.8);
+    text-shadow: none;
+}
+
+.current-prize-item.current .current-prize-item-name {
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 1),
+                 0 0 20px rgba(0, 255, 255, 0.8);
+}
+
+.current-prize-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00ffff;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8),
+                 0 0 15px rgba(0, 255, 255, 0.5);
+    line-height: 1.4;
+    word-wrap: break-word;
+    max-width: 100%;
+    padding: 0 10px;
+    min-height: 24px;
 }
 
 /* 控制栏 */

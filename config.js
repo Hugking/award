@@ -5,9 +5,7 @@ const CONFIG = {
         lucky: {
             name: '幸运奖',                    // 奖项名称（必填）
             total: 43,                         // 奖项总名额（必填）
-            distribution: [15, 15, 13]        // 每次抽取的数量分配（必填）
-            // 例如：[15, 15, 13] 表示：
-            //   第1次抽15个，第2次抽15个，第3次抽13个，共43个
+            distribution: [13, 15, 15]        // 每次抽取的数量分配（必填）
         },
         third: {
             name: '三等奖',
@@ -54,9 +52,9 @@ const CONFIG = {
     prizeImages: {
         // 幸运奖：3种奖品
         lucky: [
+            { src: 'images/prizes/lucky_3.jpg', label: '科大讯飞降噪会议耳机' , name: '科大讯飞降噪会议耳机'},
             { src: 'images/prizes/lucky_1.jpg', label: '东芝电饭锅' , name: '东芝电饭锅'},
             { src: 'images/prizes/lucky_2.jpg', label: '追觅高速吹风机套装' , name: '追觅高速吹风机套装'},
-            { src: 'images/prizes/lucky_3.jpg', label: '科大讯飞降噪会议耳机' , name: '科大讯飞降噪会议耳机'},
         ],
         // 三等奖：大疆 action4
         third: [
@@ -68,8 +66,7 @@ const CONFIG = {
         ],
         // 一等奖：苹果手机17（256G）＋ 苹果AirPods 4
         first: [
-            { src: 'images/prizes/first_1.jpg', label: '苹果手机17（256G）＋ 苹果AirPods 4' , name: '苹果手机17（256G）'},
-            { src: 'images/prizes/first_2.jpg', label: '苹果手机17（256G）＋ 苹果AirPods 4' , name: '苹果AirPods 4'}
+            { src: 'images/prizes/first.jpg', label: '苹果手机17(256G)＋苹果AirPods 4' , name: '苹果手机17(256G)套装'}
         ]
     }
 };
